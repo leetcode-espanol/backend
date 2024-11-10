@@ -53,7 +53,6 @@ func main() {
 	e := echo.New()
 
 	e.GET("/vivo", func(c echo.Context) error {
-		//return c.String(http.StatusOK, "está vivooooooooo")
 
 		json.NewEncoder(c.Response().Writer).Encode(map[string]string{"message":"está vivooooooooo"})
 		return nil
