@@ -54,11 +54,9 @@ func main() {
 
 	e.GET("/vivo", func(c echo.Context) error {
 		//return c.String(http.StatusOK, "está vivooooooooo")
-		val, err := json.Marshal(map[string]string{"message": "está vivooooooooo"}) 
-		if err != nil {
-			return c.String(http.StatusInternalServerError, fmt.Sprintf("Error: %s", err))  
-		}
-		return c.JSON(http.StatusOK, val) 
+
+		json.NewEncoder(c.Response().Writer).Encode(map[string]string{"message":"está vivooooooooo"})
+		return nil
 
 	})
 	if err := e.Start(":6000"); err != http.ErrServerClosed {
