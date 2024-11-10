@@ -9,17 +9,14 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
+	"github.com/leetcode-espanol/backend/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-type Product struct {
-	gorm.Model
-	Code  string
-	Price uint
-}
 
-func init_db() *gorm.DB {
+
+func init_db() (*gorm.DB, error) {
 	host := os.Getenv("DB_HOST")
 	user := os.Getenv("DB_USER")
 	password := os.Getenv("DB_PASSWORD")
@@ -43,13 +40,29 @@ func init_db() *gorm.DB {
 	if err != nil {
 		panic("failed to connect database")
 	}
-	return db
+
+
+	    err = db.AutoMigrate(
+        &models.Account{},
+        &models.Session{},
+        &models.User{},
+        &models.VerificationToken {},
+    )
+    if err != nil {
+        return nil, err
+    }
+
+
+	return db, nil
 }
 
 func main() {
 
-	db := init_db()
-	db.AutoMigrate(&Product{})
+	_, err := init_db()
+	if err != nil {
+		log.Fatalf("failed to connect database: %v", err)
+	}
+
 	e := echo.New()
 
 	e.GET("/vivo", func(c echo.Context) error {
