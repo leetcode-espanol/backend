@@ -1,77 +1,52 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
-	"os"
 
-	"github.com/joho/godotenv"
-	"github.com/labstack/echo/v4"
+	"github.com/gin-gonic/gin"
+	"github.com/leetcode-espanol/backend/utils"
+	"github.com/leetcode-espanol/backend/routes/user"
+
 	"github.com/leetcode-espanol/backend/models"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-
-
-func init_db() (*gorm.DB, error) {
-	host := os.Getenv("DB_HOST")
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	db_name := os.Getenv("DB_NAME")
-	port := os.Getenv("DB_PORT")
-	if host == "" {
-		err := godotenv.Load(".env")
-		if err != nil {
-			log.Fatalf("Error loading .env file: %s", err)
-		}
-		host = os.Getenv("DB_HOST")
-		user = os.Getenv("DB_USER")
-		password = os.Getenv("DB_PASSWORD")
-		db_name = os.Getenv("DB_NAME")
-		port = os.Getenv("DB_PORT")
-	}
-
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", host, user, password, db_name, port)
-
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+func migrate_db(db *gorm.DB) error {
+	err := db.AutoMigrate(
+		&models.Account{},
+		&models.Session{},
+		&models.User{},
+		&models.VerificationToken{},
+		&models.Problem{},
+		&models.Solution{},
+	)
 	if err != nil {
-		panic("failed to connect database")
+		return err
 	}
-
-
-	    err = db.AutoMigrate(
-        &models.Account{},
-        &models.Session{},
-        &models.User{},
-        &models.VerificationToken {},
-    )
-    if err != nil {
-        return nil, err
-    }
-
-
-	return db, nil
+	return nil
 }
-
 func main() {
 
-	_, err := init_db()
+	db, err := utils.InitDB ()
 	if err != nil {
 		log.Fatalf("failed to connect database: %v", err)
 	}
 
-	e := echo.New()
+	migrate_db(db)
+	if err != nil {
+		log.Fatalf("failed to migrate database: %v", err)
+	}
+	r := gin.Default()
+	rg := r.Group("/users")
 
-	e.GET("/vivo", func(c echo.Context) error {
-
-		json.NewEncoder(c.Response().Writer).Encode(map[string]string{"message":"está vivooooooooo"})
-		return nil
-
+	user_routes.AddUserRoutes(rg)
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "pong",
+		})
 	})
-	if err := e.Start(":6000"); err != http.ErrServerClosed {
+	if err := r.Run(":6000"); err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
 }
