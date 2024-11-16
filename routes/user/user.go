@@ -42,8 +42,7 @@ func AuthMiddleware(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Retrieve the user associated with the session token
-		user, err := GetUserBySessionToken(db, token) // Adjust based on your package structure
+		user, err := GetUserBySessionToken(db, token)
 		log.Println(user) 
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired session token"})
